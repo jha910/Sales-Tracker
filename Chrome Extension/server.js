@@ -90,7 +90,7 @@ app.get("/api/users", async (req, res) => {
 
     const usersWithRoles = users.map(u => ({
       _id: u._id,
-      ame: u.name,
+      name: u.name,
       email: u.email,
       role: roleMap[String(u.roleid)] || "Unknown",
     }));
