@@ -327,7 +327,6 @@ document.addEventListener("DOMContentLoaded", function () {
         tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${user.name || '-'}</td>
-          <td>${user.email}</td>
           <td>${user.role}</td>
           <td>
             <button class="btn btn-warning btn-sm editUserBtn" data-id="${user._id}">Edit</button>
@@ -392,18 +391,24 @@ document.addEventListener("DOMContentLoaded", function () {
     const password = userPassInput.value.trim();
     const roleid = userRoleInput.value;
     const userId = userIdInput.value;
+
     if (!email || !password || !roleid) {
       alert("Please fill in all fields.");
       return;
     }
+
+    const confirmMsg = userId
+      ? "Following changes will be saved. Proceed?"
+      : "New user will be added. Proceed?";
+    if (!confirm(confirmMsg)) return;
+
     if (!userId) {
-      // New user
-      await addUser(name,email, password, roleid);
+      await addUser(name, email, password, roleid);
     } else {
-      // Edit user
-      await updateUser(userId,name, email, password, roleid);
+      await updateUser(userId, name, email, password, roleid);
     }
   });
+
 
 
   // --- RESET MODAL WHEN ADD BUTTON CLICKED ---
@@ -433,6 +438,21 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     };
   }
+  const toggleUserPassBtn = document.getElementById("toggleUserPass");
+  if (toggleUserPassBtn) {
+    toggleUserPassBtn.onclick = function () {
+      const pwd = document.getElementById("userPass");
+      const icon = document.getElementById("toggleUserPassIcon");
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        icon.textContent = "🙈";
+      } else {
+        pwd.type = "password";
+        icon.textContent = "👁️";
+      }
+    };
+  }
+
   document.querySelectorAll(".editUserBtn").forEach((btn) => {
   btn.addEventListener("click", async (e) => {
     const id = e.target.getAttribute("data-id");

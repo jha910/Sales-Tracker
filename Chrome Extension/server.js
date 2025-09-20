@@ -41,6 +41,7 @@ app.post("/api/users/login", async (req, res) => {
     res.json({
       user: {
         id: user._id,
+        ame: user.name,
         email: user.email,
         roleid: user.roleid
       }
