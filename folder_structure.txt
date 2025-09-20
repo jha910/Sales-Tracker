@@ -1,0 +1,30 @@
+Folder PATH listing
+Volume serial number is 4457-C3E8
+C:.
+|   folder_structure.txt
+|   install_and_start.bat
+|   README.txt
+|   
+\---Chrome Extension
+    |   background.js
+    |   folder_structure.txt
+    |   icon.png
+    |   manifest.json
+    |   package.json
+    |   server.js
+    |   sidepanel.html
+    |   sidepanel.js
+    |   xlsx.full.min.js
+    |   
+    +---assets
+    |       profile-image.png
+    |       style.css
+    |       
+    \---bootstrap
+        \---dist
+            +---css
+            |       bootstrap.min.css
+            |       
+            \---js
+                    bootstrap.bundle.min.js
+                    
