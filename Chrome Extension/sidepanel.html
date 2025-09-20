@@ -13,6 +13,9 @@
   <script src="xlsx.full.min.js"></script>
   <!-- Custom JS -->
   <script src="sidepanel.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap0-beta2/dist/js/bootstrap-select.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-selectrap-select.min.css"/>
+
 </head>
 <body>
   <div class="container">
@@ -73,7 +76,7 @@
           <!-- Search bar -->
           <div class="input-group mt-3 mb-3">
             <!-- <input type="text" class="form-control" placeholder="Search" id="searchInput" /> -->
-            <select class="form-select" id="searchDropdown">
+            <select class="form-select selectpicker" data-live-search="true" id="searchDropdown">
               <option value="">-- Select Agent --</option>
             </select>
           </div>
@@ -160,15 +163,17 @@
           <label class="form-label">Email</label>
           <input type="text" id="userEmail" class="form-control" required />
         </div>  
-        <div class="mb-3 position-relative">
-          <label for="password" class="form-label">Password</label>
+
+        <div class="mb-3">
+          <label for="userPass" class="form-label">Password</label>
           <div class="input-group">
-            <input type="password" id="userPass" />
-            <span id="toggleUserPass" style="cursor:pointer;">
-              <span id="toggleUserPassIcon">👁️</span>
-              </span>
+            <input type="password" class="form-control" id="userPass" placeholder="Enter password" />
+            <button class="btn btn-outline-secondary" type="button" id="toggleUserPass" tabindex="-1">
+              <span id="toggleUserPassIcon">&#128065;</span>
+            </button>
           </div>
         </div>
+
         <div class="mb-3">
           <label class="form-label">Role</label>
           <select id="userRole" class="form-select" required>

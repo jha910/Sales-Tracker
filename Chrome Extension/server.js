@@ -103,6 +103,16 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+app.get("/api/records/by-agent/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    const records = await Record.find({ mecname: email }).sort({ _id: -1 });
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch agent records" });
+  }
+});
+
 app.post("/api/users/add", async (req, res) => {
   const { name, email, pass, roleid } = req.body;
   if (!email || !pass || !roleid) {

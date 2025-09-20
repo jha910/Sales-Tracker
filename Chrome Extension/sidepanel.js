@@ -282,23 +282,31 @@ document.addEventListener("DOMContentLoaded", function () {
       users.forEach(user => {
         const option = document.createElement("option");
         option.value = user.email;
-        option.textContent = user.email;
+        option.textContent = user.name || user.email;
         dropdown.appendChild(option);
       });
+      $('.selectpicker').selectpicker('refresh'); // Refresh Bootstrap Select
     } catch (err) {
       console.error("Failed to load users for search dropdown", err);
     }
   }
+
   populateSearchDropdown();
 
   const searchDropdown = document.getElementById("searchDropdown");
-  searchDropdown.addEventListener("change", () => {
-    const selectedEmail = searchDropdown.value.toLowerCase();
-    const records = recordsContainer.querySelectorAll(".record");
-    records.forEach(record => {
-      const text = record.textContent.toLowerCase();
-      record.style.display = selectedEmail === "" || text.includes(selectedEmail) ? "block" : "none";
-    });
+  searchDropdown.addEventListener("change", async () => {
+    const selectedEmail = searchDropdown.value;
+    if (!selectedEmail) {
+      loadAllRecords(); // Show all
+      return;
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedEmail}`);
+      const records = await response.json();
+      renderRecords(records);
+    } catch (err) {
+      console.error("Failed to fetch filtered records", err);
+    }
   });
 
   if (logoutBtn) {
@@ -335,6 +343,23 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
         userTableBody.appendChild(tr);
       });
+      // Attach edit listeners
+      document.querySelectorAll(".editUserBtn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          const id = e.target.getAttribute("data-id");
+          const res = await fetch(`${API_URL}/${id}`);
+          const user = await res.json();
+
+          userModalTitle.textContent = "Edit User";
+          userIdInput.value = id;
+          document.getElementById("userName").value = user.name || "";
+          userEmailInput.value = user.email;
+          userPassInput.value = "";
+          userRoleInput.value = user.roleid || "1";
+
+          addUserModal.show();
+        });
+      });
       // Attach delete listeners
       document.querySelectorAll(".deleteUserBtn").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
@@ -347,6 +372,37 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (err) {
       console.error("Error fetching users:", err);
     }
+  }
+  //-- Render Records ---
+  function renderRecords(records) {
+    const container = document.getElementById("recordsContainer");
+    container.innerHTML = "";
+    if (records.length === 0) {
+      container.innerHTML = "<p>No records found.</p>";
+      return;
+    }
+    let tableHTML = `
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>MEC Name</th>
+            <th>Name</th>
+            <th>Date & Time</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    records.forEach(record => {
+      tableHTML += `
+        <tr>
+          <td>${record.mecname || '-'}</td>
+          <td>N/A</td>
+          <td>${record.date || ''} ${record.time || ''}</td>
+        </tr>
+      `;
+    });
+    tableHTML += `</tbody></table>`;
+    container.innerHTML = tableHTML;
   }
 
   // --- ADD USER ---
@@ -431,10 +487,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const icon = document.getElementById('togglePasswordIcon');
       if (pwd.type === 'password') {
         pwd.type = 'text';
-        icon.textContent = '🙈';
+        icon.textContent = "\u{1F648}";
       } else {
         pwd.type = 'password';
-        icon.textContent = '👁️';
+        icon.textContent = "\u{1F441}";
       }
     };
   }
@@ -445,30 +501,13 @@ document.addEventListener("DOMContentLoaded", function () {
       const icon = document.getElementById("toggleUserPassIcon");
       if (pwd.type === "password") {
         pwd.type = "text";
-        icon.textContent = "🙈";
+        icon.textContent = "\u{1F648}";
       } else {
         pwd.type = "password";
-        icon.textContent = "👁️";
+        icon.textContent = "\u{1F441}";
       }
     };
   }
-
-  document.querySelectorAll(".editUserBtn").forEach((btn) => {
-  btn.addEventListener("click", async (e) => {
-    const id = e.target.getAttribute("data-id");
-    // Fetch user data from your users array or API
-    const res = await fetch(`${API_URL}/${id}`);
-    const user = await res.json();
-    userModalTitle.textContent = "Edit User";
-    userIdInput.value = id;
-    document.getElementById("userName").value = user.name || "";
-    userEmailInput.value = user.email;
-    userPassInput.value = user.pass || "";
-    userRoleInput.value = user.roleid || "1";
-    addUserModal.show();
-  });
-});
-
 });
 
 
