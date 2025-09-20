@@ -1,89 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Sales Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download Excel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.minyle>
-    body { background: #f8f9fa; }
-    .sidepanel-container { padding: 16px; min-width: 350px; }
-    .main-section { margin-bottom: 16px; }
-    .tab-content { margin-top: 16px; }
-    .table th, .table td { vertical-align: middle; }
-    .modal-content { border-radius: 8px; }
-  </style>
+  <link rel="stylesheet" href="./bootstrap/dist/css/bootstrap.min.css" />
+  <!-- Optional Custom CSS -->
+  <link rel="stylesheet" href="/assets/style.css" />
+  <!-- Bootstrap JS -->
+  <script src="./bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+  <!-- SheetJS -->
+  <script src="xlsx.full.min.js"></script>
+  <!-- Custom JS -->
+  <script src="sidepanel.js" defer></script>
 </head>
 <body>
-  <div class="sidepanel-container">
-    <!-- Login Section -->
+  <div class="container">
     <div class="login-container">
-      <h5 class="mb-3">Login</h5>
+      <h4 class="text-center mb-4">Login</h4>
       <form id="loginForm">
-        <div class="mb-2">
-          <input type="email" class="form-control" id="email" placeholder="Email address" required>
+        <div class="mb-3">
+          <label for="text" class="form-label">Email address</label>
+          <input type="text" class="form-control" id="email" placeholder="Enter email">
         </div>
-        <div class="mb-2">
-          <input type="password" class="form-control" id="password" placeholder="Password" required>
+        <div class="mb-3 position-relative">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" placeholder="Enter password">
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">
+              <span id="togglePasswordIcon">&#128065;</span>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
       </form>
     </div>
-
-    <!-- Main Section (hidden until login) -->
-    <div id="mainSection" class="main-section d-none">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span id="loggedUserName" class="fw-bold"></span>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
-      </div>
-      <!-- Tabs -->
-      <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+    <div id="mainSection" class="d-none">
+      <!-- Main Tabs (Tab 1 and Tab 2) -->
+      <ul class="nav nav-tabs" id="tabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">Information</button>
+          <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button"
+            role="tab">Agent View</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button" role="tab">Report</button>
+          <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button"
+            role="tab">Manger View
+          </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3" type="button" role="tab">User Management</button>
+          <button class="nav-link" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3" type="button"
+            role="tab">Super Admin View
+          </button>
         </li>
       </ul>
-      <div class="tab-content">
-        <!-- Tab 1: Information -->
+      <div class="text-end mt-3">
+        <button class="btn btn-outline-danger btn-sm" id="logoutBtn">Logout</button>
+      </div>
+      <div class="tab-content" id="tabContent">
+        <!-- Tab 1 Content -->
         <div class="tab-pane fade show active" id="tab1" role="tabpanel">
-          <div class="mb-2">
-            <label for="dataInput" class="form-label">MEC Name</label>
-            <input type="text" id="dataInput" class="form-control" placeholder="Enter MEC Name">
+          <div id="successAlert" class="alert alert-success mt-3 d-none">Request sent successfully</div>
+          <div class="mb-3 mt-3">
+            <label class="form-label">MEC Name</label>
+            <input type="text" class="form-control" id="dataInput" placeholder="Enter MEC Name" />
           </div>
-          <button id="downloadBtn" class="btn btn-success mb-2">Submit</button>
-          <div id="successAlert" class="alert alert-success d-none" role="alert">Request sent successfully</div>
-          <div>
-            <h6>Latest Submission</h6>
-            <div><strong>Name:</strong> <span id="infoMecName"></span></div>
-            <div><strong>Date & Time:</strong> <span id="infoDateTime"></span></div>
-          </div>
-          <div id="recordsContainer" class="mt-2"></div>
+          <button class="btn btn-purple w-100" id="downloadBtn">Submit</button>
         </div>
-        <!-- Tab 2: Report -->
+        <!-- Tab 2 Content -->
         <div class="tab-pane fade" id="tab2" role="tabpanel">
-          <div class="mb-2">
-            <label for="startDate" class="form-label">Start Date</label>
-            <input type="date" id="startDate" class="form-control">
+          <!-- Search bar -->
+          <div class="input-group mt-3 mb-3">
+            <!-- <input type="text" class="form-control" placeholder="Search" id="searchInput" /> -->
+            <select class="form-select" id="searchDropdown">
+              <option value="">-- Select Agent --</option>
+            </select>
           </div>
-          <div class="mb-2">
-            <label for="endDate" class="form-label">End Date</label>
-            <input type="date" id="endDate" class="form-control">
+          <!-- Profile card -->
+          <div class="d-flex align-items-center mb-3 p-2 border rounded">
+            <img src="assets/profile-image.png" alt="Profile" class="rounded-circle me-2" width="48" height="48" />
+            <div>
+              <div class="fw-bold" id="loggedUserName">Loading...</div>
+              <div class="text-muted small">Sr. Project Manager</div>
+            </div>
           </div>
-          <button id="generateReportBtn" class="btn btn-primary mb-2">Generate Report</button>
+          <!-- Inner Bootstrap Tabs for Info & Report -->
+          <ul class="nav nav-tabs mb-3" id="innerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#infoContent"
+                type="button" role="tab">Information</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#reportContent"
+                type="button" role="tab">Report</button>
+            </li>
+          </ul>
+          <!-- Inner Tab Content -->
+          <div class="tab-content">
+            <!-- Information Tab -->
+            <div class="tab-pane fade show active" id="infoContent" role="tabpanel">
+              <div class="card border-0">
+                <h6 class="fw-bold mb-3">Information</h6>
+                <div id="recordsContainer">
+                </div>
+              </div>
+            </div>
+            <!-- Report Tab -->
+            <div class="tab-pane fade" id="reportContent" role="tabpanel">
+              <div class="card border-0">
+                <h6 class="fw-bold">Download Report</h6>
+                <label class="form-label mt-2">Date Duration <span class="text-danger">*</span></label>
+                <div class="mb-2">
+                  <input type="date" class="form-control mb-2" id="startDate" value="" />
+                  <input type="date" class="form-control" id="endDate" value="" />
+                </div>
+                <button class="btn btn-purple w-100 mt-2" id="generateReportBtn">Generate report</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <!-- Tab 3: User Management -->
+        <!-- Tab 3 Content-->
+        <!-- User Management -->
         <div class="tab-pane fade" id="tab3" role="tabpanel">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="mb-0">User Management</h6>
-            <button id="addUserBtn" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>
+          <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+            <h5>User Management</h5>
           </div>
-          <table class="table table-bordered table-striped">
-            <thead>
+          <table class="table table-bordered table-sm" id="userTable">
+            <thead class="table-light">
               <tr>
                 <th>#</th>
                 <th>Name</th>
@@ -94,51 +138,53 @@
             </thead>
             <tbody id="userTableBody"></tbody>
           </table>
+          <button class="btn btn-primary btn-sm w-100 mt-2" id="addUserBtn" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            Add User
+          </button>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Add User Modal -->
-  <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="userModalTitle" aria-hidden="true">
-    <div class="modal-dialog">
-      <form id="userForm" class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="userModalTitle">Add User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="userId">
-          <div class="mb-2">
-            <label for="userEmail" class="form-label">Email</label>
-            <input type="email" id="userEmail" class="form-control" required>
-          </div>
-          <div class="mb-2">
-            <label for="userPass" class="form-label">Password</label>
-            <input type="password" id="userPass" class="form-control" required>
-          </div>
-          <div class="mb-2">
-            <label for="userRole" class="form-label">Role</label>
-            <select id="userRole" class="form-select" required>
-              <option value="1">Agent</option>
-              <option value="2">Manager</option>
-              <option value="3">Admin</option>
-            </select>
+  <!-- Add/Edit User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="userForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalTitle">Add User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="userId" />
+        <label for="userName">Name</label>
+        <input type="text" id="userName" class="form-control" />
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="text" id="userEmail" class="form-control" required />
+        </div>  
+        <div class="mb-3 position-relative">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" placeholder="Enter password">
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">
+              <span id="togglePasswordIcon">&#128065;</span>
+            </button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <div class="mb-3">
+          <label class="form-label">Role</label>
+          <select id="userRole" class="form-select" required>
+            <option value="1">Agent</option>
+            <option value="2">Manager</option>
+            <option value="3">Admin</option>
+          </select>
         </div>
-      </form>
-    </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="saveUserBtn">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
   </div>
-
-  <!-- Bootstrap JS -->
-  bootstrap/dist/js/bootstrap.bundle.min.js</script>
-  <!-- XLSX JS -->
-  xlsx.full.min.js</script>
-  <!-- Main JS -->
-  sidepanel.js</script>
+</div>
 </body>
 </html>

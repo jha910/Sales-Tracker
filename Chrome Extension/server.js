@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 app.use(cors({ origin: "*" }));
@@ -22,17 +23,19 @@ const recordSchema = new mongoose.Schema({
 const Record = mongoose.model("Record", recordSchema);
 
 const userSchema = new mongoose.Schema({
-  email: String,
-  pass: String,
+  name: String,
+  email: { type: String, required: true, unique: true },
+  pass: { type: String, required: true },
   roleid: String,
 });
+
 const User = mongoose.model("User", userSchema);
 
 app.post("/api/users/login", async (req, res) => {
   const { email, pass } = req.body;
   try {
-    const user = await User.findOne({ email, pass });
-    if (!user) {
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(pass, user.pass))) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
     res.json({
@@ -74,12 +77,14 @@ app.get("/api/records", async (req, res) => {
 const roleMap = {
   "1": "Agent",
   "2": "Manager",
+  "3": "Admin"
 };
+
 
 app.get("/api/users", async (req, res) => {
   try {
     const users = await User.find({ roleid: { $in: ["1", "2"] } })
-      .select("email roleid _id")
+      .select("name email roleid _id")
       .lean();
 
     const usersWithRoles = users.map(u => ({
@@ -97,7 +102,7 @@ app.get("/api/users", async (req, res) => {
 });
 
 app.post("/api/users/add", async (req, res) => {
-  const { email, pass, roleid } = req.body;
+  const { name, email, pass, roleid } = req.body;
   if (!email || !pass || !roleid) {
     return res.status(400).json({ error: "All fields required" });
   }
@@ -105,13 +110,41 @@ app.post("/api/users/add", async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(409).json({ error: "User already exists" });
 
-    const user = new User({ email, pass, roleid });
+    const hashedPass = await bcrypt.hash(pass, 10);
+    const user = new User({ name, email, pass: hashedPass, roleid });
+
     await user.save();
     res.status(201).json({ message: "User added", user });
   } catch (err) {
     res.status(500).json({ error: "Failed to add user" });
   }
 });
+app.put("/api/users/:id", async (req, res) => {
+  const { name, email, pass, roleid } = req.body;
+  try {
+    const updateFields = { name, email, roleid };
+    if (pass) {
+      updateFields.pass = await bcrypt.hash(pass, 10);
+    }
+    const updated = await User.findByIdAndUpdate(req.params.id, updateFields, { new: true });
+    if (!updated) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User updated", user: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+
+app.get("/api/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
 
 app.delete("/api/users/:id", async (req, res) => {
   try {
