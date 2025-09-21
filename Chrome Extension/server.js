@@ -55,21 +55,23 @@ app.post("/api/users/login", async (req, res) => {
 });
 
 app.post("/api/records", async (req, res) => {
-  console.log("Received from client:", req.body);
-  const { mecname, agentEmail, agentName, date, time } = req.body;
+  const { mecname, agentEmail, agentName, date, time, force } = req.body;
   if (!mecname) {
     return res.status(400).json({ error: "mecName is required" });
   }
   try {
-    // Check for duplicate MEC name
-    const existing = await Record.findOne({ mecname });
-    if (existing) {
-      return res.status(200).json({
-        duplicate: true,
-        message: `MEC already registered by the agent ${existing.agentEmail}. Do you wish to save it again?`,
-        existingAgent: existing.agentEmail
-      });
+    if (!force) {
+      // Check for duplicate MEC name
+      const existing = await Record.findOne({ mecname });
+      if (existing) {
+        return res.status(200).json({
+          duplicate: true,
+          message: `MEC already registered by the agent ${existing.agentEmail}. Do you wish to save it again?`,
+          existingAgent: existing.agentEmail
+        });
+      }
     }
+    // Save new record (even if duplicate, if force is true)
     const newRecord = new Record({ mecname, agentEmail, agentName, date, time });
     await newRecord.save();
     res.status(201).json({ message: "Saved to MongoDB", record: newRecord });
@@ -77,6 +79,7 @@ app.post("/api/records", async (req, res) => {
     res.status(500).json({ error: "Failed to save record" });
   }
 });
+
 
 app.get("/api/records", async (req, res) => {
   try {

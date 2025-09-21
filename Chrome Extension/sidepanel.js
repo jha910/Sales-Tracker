@@ -162,13 +162,12 @@ document.addEventListener("DOMContentLoaded", function () {
           if (!confirm(data.message)) {
             return; // User cancelled
           }
-          // Proceed to save again
+          // Proceed to save again, but add force: true
           const res2 = await fetch(`${BASE_URL}/api/records`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(record)
+            body: JSON.stringify({ ...record, force: true }) // <-- add force: true
           });
-
           if (!res2.ok) throw new Error("Failed to save");
           alert(`MEC "${input}" saved successfully for ${agentName}`);
           updateInfoTab(record);
@@ -176,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("dataInput").value = "";
           return;
         }
-
+        
         if (!res.ok) throw new Error("Failed to save");
         // show success alert
         alert(`MEC "${input}" saved successfully for ${agentName}`);
