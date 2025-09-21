@@ -61,6 +61,15 @@ app.post("/api/records", async (req, res) => {
     return res.status(400).json({ error: "mecName is required" });
   }
   try {
+    // Check for duplicate MEC name
+    const existing = await Record.findOne({ mecname });
+    if (existing) {
+      return res.status(200).json({
+        duplicate: true,
+        message: `MEC already registered by the agent ${existing.agentEmail}. Do you wish to save it again?`,
+        existingAgent: existing.agentEmail
+      });
+    }
     const newRecord = new Record({ mecname, agentEmail, agentName, date, time });
     await newRecord.save();
     res.status(201).json({ message: "Saved to MongoDB", record: newRecord });

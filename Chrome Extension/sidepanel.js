@@ -75,6 +75,13 @@ document.addEventListener("DOMContentLoaded", function () {
         sessionStorage.setItem("isLoggedIn", "true");
         sessionStorage.setItem("roleid", data.user.roleid);
         sessionStorage.setItem("logginusername", data.user.email);
+        sessionStorage.setItem("loggeduserprofilename", data.user.name);
+
+        const userNameElement = document.getElementById("loggedUserName");
+        if (userNameElement) {
+          userNameElement.textContent = data.user.name;
+        }
+        
         // Hide login and show main section
         loginContainer.classList.add("d-none");
         mainSection.classList.remove("d-none");
@@ -150,6 +157,26 @@ document.addEventListener("DOMContentLoaded", function () {
           },
           body: JSON.stringify(record)
         });
+        const data = await res.json();
+        if (data.duplicate) {
+          if (!confirm(data.message)) {
+            return; // User cancelled
+          }
+          // Proceed to save again
+          const res2 = await fetch(`${BASE_URL}/api/records`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(record)
+          });
+
+          if (!res2.ok) throw new Error("Failed to save");
+          alert(`MEC "${input}" saved successfully for ${agentName}`);
+          updateInfoTab(record);
+          loadAllRecords();
+          document.getElementById("dataInput").value = "";
+          return;
+        }
+
         if (!res.ok) throw new Error("Failed to save");
         // show success alert
         alert(`MEC "${input}" saved successfully for ${agentName}`);
@@ -230,89 +257,64 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  generateBtn.addEventListener("click", async () => {
+  const agentDropdownBtn = document.querySelector(".dropbtn");
+  let selectedAgentEmail = null;
 
-  const userNameElement = document.getElementById("loggedUserName");
-  // Example: Get user from localStorage
-  const loggedInUser = sessionStorage.getItem("logginusername");
-  if (loggedInUser) {
-    userNameElement.textContent = loggedInUser;
-  } else {
-    userNameElement.textContent = "Guest";
+  if (agentDropdownBtn) {
+    const match = agentDropdownBtn.textContent.match(/\(([^)]+)\)$/);
+    if (match) {
+      selectedAgentEmail = match[1];
+    }
   }
 
-  generateBtn.addEventListener("click", async () => {
-    const startDate = startDateInput.valueAsDate;
-    const endDate = endDateInput.valueAsDate;
-    if (!startDate || !endDate) {
-      alert("Please select both start and end dates.");
+  if (!selectedAgentEmail) {
+    alert("Please select an agent from the dropdown.");
+    return;
+  }
+
+  const startDate = startDateInput.valueAsDate;
+  const endDate = endDateInput.valueAsDate;
+
+  if (!startDate || !endDate) {
+    alert("Please select both start and end dates.");
+    return;
+  }
+
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedAgentEmail}`);
+    const records = await response.json();
+
+    const filtered = records.filter(record => {
+      const [day, month, year] = record.date.split("/");
+      const recordDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+      return recordDate >= startDate && recordDate <= endDate;
+    });
+
+    if (filtered.length === 0) {
+      alert("No records found for selected agent and date range.");
       return;
     }
-    // Normalize to midnight for comparison
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999); // include full day
-    try {
-      const response = await fetch(`${BASE_URL}/api/records`);
-      const records = await response.json();
-      const filtered = records.filter(record => {
-        const [month, day, year] = record.date.split("/"); // "7/24/2025"
-        const recordDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
-        return recordDate >= startDate && recordDate <= endDate;
-      });
-      if (filtered.length === 0) {
-        alert("No records found for selected date range.");
-        return;
-      }
-      // Generate Excel
-      const worksheetData = filtered.map(r => ({
-        "MEC Name": r.mecname,
-        "Date": r.date,
-        "Time": r.time
-      }));
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(worksheetData);
-      XLSX.utils.book_append_sheet(wb, ws, "Report");
-      XLSX.writeFile(wb, `MEC_Report_${startDateInput.value}_to_${endDateInput.value}.xlsx`);
-    } catch (err) {
-      console.error("Error generating report:", err);
-      alert("Failed to generate report.");
-    }
-  });
 
-  // async function populateSearchDropdown() {
-  //   const dropdown = document.getElementById("searchDropdown");
-  //   if (!dropdown) return;
-  //   try {
-  //     const response = await fetch(`${BASE_URL}/api/users`);
-  //     const users = await response.json();
-  //     users.forEach(user => {
-  //       const option = document.createElement("option");
-  //       option.value = user.email;
-  //       option.textContent = user.name || user.email;
-  //       dropdown.appendChild(option);
-  //     });
-  //     $('.selectpicker').selectpicker('refresh'); // Refresh Bootstrap Select
-  //   } catch (err) {
-  //     console.error("Failed to load users for search dropdown", err);
-  //   }
-  // }
+    const worksheetData = filtered.map(r => ({
+      "MEC Name": r.mecname,
+      "Date": r.date,
+      "Time": r.time
+    }));
 
-  // populateSearchDropdown();
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, `MEC_Report_${selectedAgentEmail}_${startDateInput.value}_to_${endDateInput.value}.xlsx`);
+  } catch (err) {
+    console.error("Error generating report:", err);
+    alert("Failed to generate report.");
+  }
+});
 
-  // const searchDropdown = document.getElementById("searchDropdown");
-  // searchDropdown.addEventListener("change", async () => {
-  //   const selectedEmail = searchDropdown.value;
-  //   if (!selectedEmail) {
-  //     loadAllRecords(); // Show all
-  //     return;
-  //   }
-  //   try {
-  //     const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedEmail}`);
-  //     const records = await response.json();
-  //     renderRecords(records);
-  //   } catch (err) {
-  //     console.error("Failed to fetch filtered records", err);
-  //   }
-  // });
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -456,7 +458,7 @@ document.addEventListener("DOMContentLoaded", function () {
         link.href = "#";
         link.textContent = `${user.name} (${user.email})`;
         link.onclick = () => {
-          document.querySelector(".dropbtn").textContent = user.name;
+          document.querySelector(".dropbtn").textContent = `${user.name} (${user.email})`; // ✅ full format
           dropdown.classList.remove("show");
           fetchAgentRecords(user.email); // Optional: load records for selected agent
         };
