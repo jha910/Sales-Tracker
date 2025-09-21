@@ -23,6 +23,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const userRoleInput = document.getElementById("userRole");
   const addUserBtn = document.getElementById("addUserBtn");
   const addUserModal = new bootstrap.Modal(document.getElementById("addUserModal"));
+  
+  const closeBtn = document.getElementById("closeUserModalBtn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function() {
+        addUserModal.hide();
+      });
+    }
+  const cancelbtn = document.getElementById("cancelUserModalBtn");
+    if (cancelbtn) {
+      cancelbtn.addEventListener("click", function() {
+        addUserModal.hide();
+      });
+    }
+
   document.getElementById("agentSearchInput").addEventListener("keyup", filterAgents);
   document.getElementById("agentDropdownBtn").addEventListener("click", toggleDropdown);
   let selectedAgentEmail = null;
