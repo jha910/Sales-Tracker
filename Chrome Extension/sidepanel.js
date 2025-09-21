@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const addUserModal = new bootstrap.Modal(document.getElementById("addUserModal"));
   document.getElementById("agentSearchInput").addEventListener("keyup", filterAgents);
   document.getElementById("agentDropdownBtn").addEventListener("click", toggleDropdown);
+  let selectedAgentEmail = null;
 
   // Use Render backend
   const BASE_URL = "https://sales-tracker-nyw7.onrender.com";
@@ -175,7 +176,7 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("dataInput").value = "";
           return;
         }
-        
+
         if (!res.ok) throw new Error("Failed to save");
         // show success alert
         alert(`MEC "${input}" saved successfully for ${agentName}`);
@@ -221,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
         tableHTML += `
         <tr>
         <td>${record.mecname || '-'}</td>
-        <td>N/A</td>
+        <td>${record.agentName || '-'}</td>
         <td>${record.date || ''} ${record.time || ''}</td>
         </tr>
         `;
@@ -258,19 +259,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
   generateBtn.addEventListener("click", async () => {
   const agentDropdownBtn = document.querySelector(".dropbtn");
-  let selectedAgentEmail = null;
-
-  if (agentDropdownBtn) {
+  selectedAgentEmail = window.selectedAgentEmail || null;
+  if (!selectedAgentEmail) {
+    // fallback to old logic if needed
     const match = agentDropdownBtn.textContent.match(/\(([^)]+)\)$/);
     if (match) {
       selectedAgentEmail = match[1];
     }
   }
-
   if (!selectedAgentEmail) {
     alert("Please select an agent from the dropdown.");
     return;
   }
+
 
   const startDate = startDateInput.valueAsDate;
   const endDate = endDateInput.valueAsDate;
@@ -284,9 +285,16 @@ document.addEventListener("DOMContentLoaded", function () {
   endDate.setHours(23, 59, 59, 999);
 
   try {
-    const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedAgentEmail}`);
-    const records = await response.json();
-
+    let records = [];
+    if (selectedAgentEmail === "ALL") {
+      // Fetch all records
+      const response = await fetch(`${BASE_URL}/api/records`);
+      records = await response.json();
+    } else {
+      // Fetch records for selected agent
+      const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedAgentEmail}`);
+      records = await response.json();
+    }
     const filtered = records.filter(record => {
       const [day, month, year] = record.date.split("/");
       const recordDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
@@ -297,9 +305,10 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("No records found for selected agent and date range.");
       return;
     }
-
+    
     const worksheetData = filtered.map(r => ({
       "MEC Name": r.mecname,
+      "Agent Name": r.agentName || "-",
       "Date": r.date,
       "Time": r.time
     }));
@@ -402,7 +411,7 @@ document.addEventListener("DOMContentLoaded", function () {
       tableHTML += `
         <tr>
           <td>${record.mecname || '-'}</td>
-          <td>N/A</td>
+          <td>${record.agentName || '-'}</td>
           <td>${record.date || ''} ${record.time || ''}</td>
         </tr>
       `;
@@ -446,6 +455,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function populateAgentDropdown() {
     const dropdown = document.getElementById("agentDropdown");
+    dropdown.innerHTML = ""; // Clear previous
+    
+    // Add "Select All" option
+    const selectAllLink = document.createElement("a");
+    selectAllLink.href = "#";
+    selectAllLink.textContent = "Select All";
+    selectAllLink.onclick = () => {
+      document.querySelector(".dropbtn").textContent = "Select All";
+      dropdown.classList.remove("show");
+      window.selectedAgentEmail = "ALL"; // Set a global flag
+    };
+    dropdown.appendChild(selectAllLink);
+
     if (!dropdown) return;
 
     try {

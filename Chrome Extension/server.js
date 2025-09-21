@@ -99,9 +99,10 @@ const roleMap = {
 
 app.get("/api/users", async (req, res) => {
   try {
-    const users = await User.find({ roleid: { $in: ["1", "2"] } })
+    const users = await User.find({})
       .select("name email roleid _id")
       .lean();
+
 
     const usersWithRoles = users.map(u => ({
       _id: u._id,
