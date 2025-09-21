@@ -16,9 +16,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 const recordSchema = new mongoose.Schema({
   mecname: String,
+  agentEmail: String,
+  agentName: String,
   date: String,
   time: String,
 });
+
 
 const Record = mongoose.model("Record", recordSchema);
 
@@ -53,12 +56,12 @@ app.post("/api/users/login", async (req, res) => {
 
 app.post("/api/records", async (req, res) => {
   console.log("Received from client:", req.body);
-  const { mecname, date, time } = req.body;
+  const { mecname, agentEmail, agentName, date, time } = req.body;
   if (!mecname) {
     return res.status(400).json({ error: "mecName is required" });
   }
   try {
-    const newRecord = new Record({ mecname, date, time });
+    const newRecord = new Record({ mecname, agentEmail, agentName, date, time });
     await newRecord.save();
     res.status(201).json({ message: "Saved to MongoDB", record: newRecord });
   } catch (error) {
@@ -103,10 +106,20 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+app.get("/api/records/by-mec/:mecname", async (req, res) => {
+  try {
+    const mecname = req.params.mecname;
+    const records = await Record.find({ mecname }).sort({ _id: -1 });
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch MEC records" });
+  }
+});
+
 app.get("/api/records/by-agent/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    const records = await Record.find({ mecname: email }).sort({ _id: -1 });
+    const records = await Record.find({ agentEmail: email }).sort({ _id: -1 });
     res.json(records);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch agent records" });

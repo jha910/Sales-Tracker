@@ -64,13 +64,24 @@
         </div>
         <!-- Tab 2 Content -->
         <div class="tab-pane fade" id="tab2" role="tabpanel">
-          <!-- Search bar -->
-          <div class="input-group mt-3 mb-3">
-            <!-- <input type="text" class="form-control" placeholder="Search" id="searchInput" /> -->
-            <select class="form-select selectpicker" data-live-search="true" id="searchDropdown">
-              <option value="">-- Select Agent --</option>
-            </select>
+          <!-- Label for dropdown -->
+          <label for="agentSearchInput" class="form-label">Search and Select an Agent</label>
+
+          <!-- Searchable Dropdown -->
+          <div class="dropdown mt-1 mb-3">
+            <button id="agentDropdownBtn" class="dropbtn">-- Select Agent --</button>
+            <div id="agentDropdown" class="dropdown-content">
+              <input
+                type="text"
+                placeholder="Type to search agents..."
+                id="agentSearchInput"
+                aria-label="Search agents"
+              />
+              <!-- Agent links will be dynamically inserted here -->
+            </div>
           </div>
+
+
           <!-- Profile card -->
           <div class="d-flex align-items-center mb-3 p-2 border rounded">
             <img src="assets/profile-image.png" alt="Profile" class="rounded-circle me-2" width="48" height="48" />
@@ -189,5 +200,61 @@
   <script src="xlsx.full.min.js"></script>
   <!-- Custom JS -->
   <script src="sidepanel.js" defer></script>
+  <style>
+        .dropbtn {
+      background-color: #04AA6D;
+      color: white;
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .dropbtn:hover, .dropbtn:focus {
+      background-color: #3e8e41;
+    }
+
+    .dropdown {
+      position: relative;
+      display: block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #f6f6f6;
+      min-width: 100%;
+      border: 1px solid #ddd;
+      z-index: 1;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    .dropdown-content a {
+      color: black;
+      padding: 10px 16px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #f1f1f1;
+    }
+
+    .show {
+      display: block;
+    }
+
+    #agentSearchInput {
+      box-sizing: border-box;
+      font-size: 16px;
+      padding: 10px;
+      border: none;
+      border-bottom: 1px solid #ddd;
+      width: 100%;
+    }
+  </style>
 </body>
 </html>

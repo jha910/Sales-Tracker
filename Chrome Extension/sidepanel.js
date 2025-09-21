@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const userRoleInput = document.getElementById("userRole");
   const addUserBtn = document.getElementById("addUserBtn");
   const addUserModal = new bootstrap.Modal(document.getElementById("addUserModal"));
+  document.getElementById("agentSearchInput").addEventListener("keyup", filterAgents);
+  document.getElementById("agentDropdownBtn").addEventListener("click", toggleDropdown);
 
   // Use Render backend
   const BASE_URL = "https://sales-tracker-nyw7.onrender.com";
@@ -131,8 +133,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const now = new Date();
       const submissionDate = now.toLocaleDateString();
       const submissionTime = now.toLocaleTimeString();
+      const agentEmail = sessionStorage.getItem("logginusername");
+      const agentName = document.getElementById("loggedUserName").textContent;
       const record = {
         mecname: input,
+        agentEmail,
+        agentName,
         date: submissionDate,
         time: submissionTime
       };
@@ -146,8 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         if (!res.ok) throw new Error("Failed to save");
         // show success alert
-        successAlert.classList.remove("d-none");
-        setTimeout(() => successAlert.classList.add("d-none"), 3000);
+        alert(`MEC "${input}" saved successfully for ${agentName}`);
         updateInfoTab(record);
         loadAllRecords();
         // clear input
@@ -273,41 +278,41 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  async function populateSearchDropdown() {
-    const dropdown = document.getElementById("searchDropdown");
-    if (!dropdown) return;
-    try {
-      const response = await fetch(`${BASE_URL}/api/users`);
-      const users = await response.json();
-      users.forEach(user => {
-        const option = document.createElement("option");
-        option.value = user.email;
-        option.textContent = user.name || user.email;
-        dropdown.appendChild(option);
-      });
-      $('.selectpicker').selectpicker('refresh'); // Refresh Bootstrap Select
-    } catch (err) {
-      console.error("Failed to load users for search dropdown", err);
-    }
-  }
+  // async function populateSearchDropdown() {
+  //   const dropdown = document.getElementById("searchDropdown");
+  //   if (!dropdown) return;
+  //   try {
+  //     const response = await fetch(`${BASE_URL}/api/users`);
+  //     const users = await response.json();
+  //     users.forEach(user => {
+  //       const option = document.createElement("option");
+  //       option.value = user.email;
+  //       option.textContent = user.name || user.email;
+  //       dropdown.appendChild(option);
+  //     });
+  //     $('.selectpicker').selectpicker('refresh'); // Refresh Bootstrap Select
+  //   } catch (err) {
+  //     console.error("Failed to load users for search dropdown", err);
+  //   }
+  // }
 
-  populateSearchDropdown();
+  // populateSearchDropdown();
 
-  const searchDropdown = document.getElementById("searchDropdown");
-  searchDropdown.addEventListener("change", async () => {
-    const selectedEmail = searchDropdown.value;
-    if (!selectedEmail) {
-      loadAllRecords(); // Show all
-      return;
-    }
-    try {
-      const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedEmail}`);
-      const records = await response.json();
-      renderRecords(records);
-    } catch (err) {
-      console.error("Failed to fetch filtered records", err);
-    }
-  });
+  // const searchDropdown = document.getElementById("searchDropdown");
+  // searchDropdown.addEventListener("change", async () => {
+  //   const selectedEmail = searchDropdown.value;
+  //   if (!selectedEmail) {
+  //     loadAllRecords(); // Show all
+  //     return;
+  //   }
+  //   try {
+  //     const response = await fetch(`${BASE_URL}/api/records/by-agent/${selectedEmail}`);
+  //     const records = await response.json();
+  //     renderRecords(records);
+  //   } catch (err) {
+  //     console.error("Failed to fetch filtered records", err);
+  //   }
+  // });
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -424,6 +429,54 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error adding user:", err);
     }
   }
+  function toggleDropdown() {
+    document.getElementById("agentDropdown").classList.toggle("show");
+  }
+  function filterAgents() {
+    const input = document.getElementById("agentSearchInput");
+    const filter = input.value.toLowerCase();
+    const links = document.querySelectorAll("#agentDropdown a");
+
+    links.forEach(link => {
+      const text = link.textContent || link.innerText;
+      link.style.display = text.toLowerCase().includes(filter) ? "" : "none";
+    });
+  }
+
+  async function populateAgentDropdown() {
+    const dropdown = document.getElementById("agentDropdown");
+    if (!dropdown) return;
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/users`);
+      const users = await response.json();
+
+      users.forEach(user => {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = `${user.name} (${user.email})`;
+        link.onclick = () => {
+          document.querySelector(".dropbtn").textContent = user.name;
+          dropdown.classList.remove("show");
+          fetchAgentRecords(user.email); // Optional: load records for selected agent
+        };
+        dropdown.appendChild(link);
+      });
+    } catch (err) {
+      console.error("Failed to load agents:", err);
+    }
+  }
+
+  function fetchAgentRecords(email) {
+    fetch(`${BASE_URL}/api/records/by-agent/${email}`)
+      .then(res => res.json())
+      .then(data => renderRecords(data))
+      .catch(err => console.error("Error fetching agent records:", err));
+  }
+
+  // Call this on page load
+  populateAgentDropdown();
+
 
   // --- DELETE USER ---
   async function deleteUser(id) {
@@ -464,9 +517,6 @@ document.addEventListener("DOMContentLoaded", function () {
       await updateUser(userId, name, email, password, roleid);
     }
   });
-
-
-
   // --- RESET MODAL WHEN ADD BUTTON CLICKED ---
   addUserBtn.addEventListener("click", () => {
     userModalTitle.textContent = "Add User";
