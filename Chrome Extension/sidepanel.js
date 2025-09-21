@@ -558,6 +558,27 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     };
   }
+  const infoTabBtn = document.getElementById("info-tab");
+  const reportTabBtn = document.getElementById("report-tab");
+  const infoContent = document.getElementById("infoContent");
+  const reportContent = document.getElementById("reportContent");
+
+  if (infoTabBtn && reportTabBtn && infoContent && reportContent) {
+    infoTabBtn.addEventListener("click", () => {
+      infoTabBtn.classList.add("active");
+      reportTabBtn.classList.remove("active");
+      infoContent.classList.add("show", "active");
+      reportContent.classList.remove("show", "active");
+    });
+
+    reportTabBtn.addEventListener("click", () => {
+      reportTabBtn.classList.add("active");
+      infoTabBtn.classList.remove("active");
+      reportContent.classList.add("show", "active");
+      infoContent.classList.remove("show", "active");
+    });
+  }
+
 });
 
 
