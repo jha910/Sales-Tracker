@@ -562,6 +562,7 @@ document.addEventListener("DOMContentLoaded", function () {
     userEmailInput.value = "";
     userPassInput.value = "";
     userRoleInput.value = "1";
+    addUserModal.show();
   });
 
   // --- INITIAL LOAD ---
